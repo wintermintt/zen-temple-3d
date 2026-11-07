@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#120b08" />
+  <title>Chùa Online 3D - Đi Chùa, Lạy Phật, Thắp Hương, Lần Tràng Hạt, Tụng Kinh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="outside-gate">
+  <div id="app">
+    <!-- Không gian 3D Chùa Vô Lượng -->
+    <div id="stage3d" tabindex="0" role="application" aria-label="Không gian 3D Chùa Online"></div>
+
+    <!-- Hạt số +Công đức bay lên -->
+    <div id="floatingMeritContainer" class="floating-merit-container"></div>
+
+    <!-- Thông báo Toast -->
+    <div id="toastBanner" class="toast-banner" hidden></div>
+
+    <!-- Lớp giao diện điều khiển & Menu Hành Lễ -->
+    <div class="ui-layer">
+      <!-- Dòng chữ chạy trên cùng -->
+      <div class="top-ticker">
+        <span>📢</span>
+        <div class="ticker-window">
+          <span class="ticker-text">
+            Chào mừng bạn về Chùa Vô Lượng Online: Xuất phát trước Cổng Tam Quan → Bước qua cổng để mở các nghi thức Lạy Phật dập đầu, Thắp hương, Lần tràng hạt 108 hạt, Gõ mõ Tụng kinh, Thỉnh Đại Hồng Chuông &amp; Thả đèn hoa đăng.
+          </span>
+        </div>
+      </div>
+
+      <!-- HUD Góc Trên Trái -->
+      <div class="hud-left">
+        <div class="player-pill interactive" id="openProfilePill" title="Bấm để xem Cấp tu & Nhân vật">
+          <div class="lotus-avatar" id="hudAvatar">T</div>
+          <div class="player-identity">
+            <span class="player-name" id="hudName">Tịnh Nghiêm 50</span>
+            <span class="player-level" id="hudLevel">Cấp 1 · Sơ Tâm</span>
+          </div>
+          <div class="merit-badge" title="Tổng Công Đức">
+            <span>🪷</span>
+            <span id="hudMerit">0</span>
+          </div>
+        </div>
+
+        <div class="location-box">
+          <div class="location-title" id="hudZoneTitle">⛩️ Trước Cổng Tam Quan</div>
+          <div class="zone-nav-row">
+            <button type="button" class="zone-btn active" id="btnGoGate" data-zone="gate">⛩️ Cổng Chùa</button>
+            <button type="button" class="zone-btn" id="btnGoCourtyard" data-zone="courtyard">🌳 Sân Chùa</button>
+            <button type="button" class="zone-btn" id="btnGoMainHall" data-zone="mainhall">🏯 Vào Chánh Điện</button>
+          </div>
+          <div class="online-pill">
+            <i></i>
+            <span>68 Phật tử đang lễ chùa online</span>
+          </div>
+        </div>
+
+        <!-- Bảng Nhiệm Vụ Ngày (Hiện khi đã bước vào chùa) -->
+        <div class="quest-tracker inside-only interactive" id="questTracker">
+          <h4>
+            <span>📜 Nhiệm Vụ Tu Tập Hôm Nay</span>
+            <span id="questProgressSummary">0/7</span>
+          </h4>
+          <div id="questListContainer"></div>
+        </div>
+      </div>
+
+      <!-- HUD Góc Trên Phải -->
+      <div class="hud-top-right">
+        <div class="currency-pill" title="Hoa Sen">
+          <span>🌸</span>
+          <span id="hudSen">50</span>
+          <small>Sen</small>
+        </div>
+        <div class="currency-pill" title="Ngọc Báu">
+          <span>💎</span>
+          <span id="hudNgoc">5</span>
+          <small>Ngọc</small>
+        </div>
+        <button type="button" class="tool-circle" id="btnToggleMusic" title="Bật/Tắt nhạc thiền">🎵</button>
+        <button type="button" class="tool-circle" id="btnToggleMute" title="Bật/Tắt âm thanh">🔊</button>
+        <button type="button" class="tool-circle" id="btnGuide" title="Hướng dẫn cách chơi">❓</button>
+      </div>
+
+      <!-- Banner Chào Mừng khi đang đứng TRƯỚC CỔNG CHÙA -->
+      <div class="gate-welcome-banner" id="gateWelcomeBanner">
+        <h3>⛩️ Nhân vật đang đứng trước Cổng Tam Quan</h3>
+        <p>Dùng phím <b>WASD / Mũi tên</b>, <b>Click xuống đất</b> hoặc bấm nút vàng bên dưới để bước qua cổng vào Chùa mở Menu Hành Lễ!</p>
+      </div>
+
+      <!-- Khung Đèn Nguyện bên phải (Hiện khi bước vào trong chùa) -->
+      <aside class="wishes-dock inside-only interactive" id="wishesDock">
+        <div class="dock-header">
+          <div class="lamp-orb">🏮</div>
+          <div class="dock-title">
+            <b>Đèn Nguyện Bình An</b>
+            <small><span id="wishCountText">4</span> ngọn đèn đang sáng</small>
+          </div>
+        </div>
+        <div class="wish-list" id="wishListContainer"></div>
+        <button type="button" class="dock-action-btn" id="btnOpenLanternModal">
+          🪷 Thả Đèn Hoa Đăng Cầu Nguyện
+        </button>
+      </aside>
+
+      <!-- Nút Phóng to / Thu nhỏ góc nhìn -->
+      <div class="zoom-controls">
+        <button type="button" class="tool-circle" id="btnZoomIn" title="Phóng to (+)">＋</button>
+        <button type="button" class="tool-circle" id="btnZoomOut" title="Thu nhỏ (-)">－</button>
+      </div>
+
+      <!-- Khu vực Giữa Dưới: Nút Tương Tác Điểm Vàng [E] & Trạng Thái Animation -->
+      <div class="center-bottom-hud">
+        <div class="ritual-status-pill" id="ritualStatusPill" hidden>
+          <span id="ritualStatusText">🙇 Đang thành tâm lạy Phật...</span>
+          <button type="button" class="ritual-stop-btn" id="btnStopRitual">Dừng</button>
+        </div>
+
+        <button type="button" class="hotspot-prompt" id="hotspotPromptBtn">
+          <span class="prompt-key">E</span>
+          <span id="hotspotPromptText">Bước qua Cổng Tam Quan vào Chùa</span>
+        </button>
+      </div>
+
+      <!-- Khung Trò Chuyện Sân Chùa (Góc dưới trái - Hiện khi bước vào chùa) -->
+      <div class="chat-box inside-only interactive">
+        <div class="chat-header">
+          <span>💬 Cộng đồng sân chùa</span>
+          <small>Enter để chat</small>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <form class="chat-input-row" id="chatForm">
+          <input type="text" id="chatInput" placeholder="Gửi lời chúc bình an, Nam mô..." maxlength="120" />
+          <button type="submit">Gửi</button>
+        </form>
+      </div>
+
+      <!-- Hàng Menu Tiện Ích Phụ góc dưới trái (Hiện khi bước vào chùa) -->
+      <nav class="bottom-left-menu inside-only">
+        <button type="button" class="sub-menu-btn" id="btnActionBell" title="Thỉnh Đại Hồng Chuông">
+          <span>🔔</span><span>Thỉnh Chuông</span>
+        </button>
+        <button type="button" class="sub-menu-btn" id="btnActionFortune" title="Xin Xăm Đầu Năm">
+          <span>🎋</span><span>Xin Xăm</span>
+        </button>
+        <button type="button" class="sub-menu-btn" id="btnActionSweep" title="Quét Lá Bồ Đề">
+          <span>🧹</span><span>Quét Lá</span>
+        </button>
+        <button type="button" class="sub-menu-btn" id="btnOpenLevelModal" title="Xem Cấp Tu & Bảng Xếp Hạng">
+          <span>🏆</span><span>Cấp Tu</span>
+        </button>
+        <button type="button" class="sub-menu-btn" id="btnOpenCharacterModal" title="Đổi trang phục & Pháp danh">
+          <span>👘</span><span>Nhân Vật</span>
+        </button>
+      </nav>
+
+      <!-- Bản đồ nhỏ Minimap -->
+      <div class="minimap-wrap inside-only interactive" title="Bản đồ Chùa Vô Lượng">
+        <canvas id="minimapCanvas" width="120" height="120"></canvas>
+      </div>
+
+      <!-- Cụm 6 Nút Hành Lễ Chính Góc Dưới Phải (Hiện khi bước vào trong chùa, giống hệt Chùa Online) -->
+      <div class="practice-grid inside-only" id="practiceGrid">
+        <button type="button" class="practice-btn" id="btnRitualBow" data-ritual="bow">
+          <span class="practice-hotkey">B</span>
+          <span class="practice-icon">🙇</span>
+          <span class="practice-label">Lạy Phật</span>
+        </button>
+        <button type="button" class="practice-btn" id="btnRitualBeads" data-ritual="beads">
+          <span class="practice-hotkey">T</span>
+          <span class="practice-icon">📿</span>
+          <span class="practice-label">Tràng hạt</span>
+        </button>
+        <button type="button" class="practice-btn" id="btnRitualChant" data-ritual="chant">
+          <span class="practice-hotkey">K</span>
+          <span class="practice-icon">📖</span>
+          <span class="practice-label">Tụng kinh</span>
+        </button>
+        <button type="button" class="practice-btn" id="btnRitualMeditate" data-ritual="meditate">
+          <span class="practice-hotkey">M</span>
+          <span class="practice-icon">🧘</span>
+          <span class="practice-label">Thiền</span>
+        </button>
+        <button type="button" class="practice-btn" id="btnRitualIncense" data-ritual="incense">
+          <span class="practice-hotkey">H</span>
+          <span class="practice-icon">🪔</span>
+          <span class="practice-label">Dâng lễ</span>
+        </button>
+        <button type="button" class="practice-btn" id="btnRitualCompanion" data-ritual="companion">
+          <span class="practice-hotkey">P</span>
+          <span class="practice-icon">🐾</span>
+          <span class="practice-label">Linh thú</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Màn hình Chuyển Cảnh Mở Cổng Tam Quan -->
+    <div id="transitionScreen" class="transition-screen" hidden>
+      <div class="transition-lotus">🪷</div>
+      <h2>Đang về Chùa Vô Lượng</h2>
+      <div class="transition-bar"><i></i></div>
+      <p style="font-size: 13px; color: #cbb99d;">Khởi hành trước Cổng Tam Quan</p>
+      <p style="font-style: italic; max-width: 340px; color: #f5e2b8;">
+        “Nước lặng thì trăng hiện, lòng lặng thì trí sáng.”
+      </p>
+    </div>
+
+    <!-- MODAL 1: Tạo Nhân Vật & Vào Chùa (Mặc định hiển thị lúc mới vào giống Chùa Online) -->
+    <div id="entryModal" class="modal-backdrop">
+      <div class="parchment-card">
+        <div class="parchment-header">
+          <h2 class="parchment-title">Chùa Online</h2>
+          <button type="button" class="modal-close-btn" id="btnCloseEntryModal" title="Đóng" hidden>✕</button>
+        </div>
+
+        <div class="char-preview-stage">
+          <canvas id="entryPreviewCanvas" width="220" height="220"></canvas>
+        </div>
+
+        <div class="type-picker-grid" id="charTypeGrid">
+          <button type="button" class="type-chip active" data-type="monk">Tiểu tăng</button>
+          <button type="button" class="type-chip" data-type="male">Phật tử nam</button>
+          <button type="button" class="type-chip" data-type="female">Phật tử nữ</button>
+        </div>
+
+        <div>
+          <div class="field-label" style="margin-bottom: 6px;">MÀU ÁO TRÀNG</div>
+          <div class="swatch-grid" id="robeSwatchGrid"></div>
+        </div>
+
+        <div>
+          <div class="field-label" style="margin-bottom: 6px;">PHÁP DANH</div>
+          <div class="name-input-row">
+            <input type="text" id="dharmaNameInput" class="parchment-input" value="Tịnh Nghiêm 50" maxlength="24" />
+            <button type="button" class="parchment-secondary-btn" id="btnRandomDharmaName">Đổi tên</button>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; cursor: pointer;">
+            <input type="checkbox" id="chkWearHat" /> Đội Nón Lá
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; cursor: pointer;">
+            <input type="checkbox" id="chkWearHalo" /> Hào Quang Phật Tử
+          </label>
+        </div>
+
+        <button type="button" class="parchment-primary-btn" id="btnConfirmEnterTemple">
+          Vào chùa
+        </button>
+
+        <p class="parchment-sub" style="font-size: 12px; text-align: center;">
+          Nhân vật xuất hiện trước Cổng Tam Quan. Dùng <b>WASD / Mũi tên</b> hoặc <b>Bấm xuống đất</b> để bước vào trong chùa hành lễ.
+        </p>
+      </div>
+    </div>
+
+    <!-- MODAL 2: Lần Tràng Hạt 108 Hạt -->
+    <div id="beadsModal" class="modal-backdrop" hidden>
+      <div class="parchment-card">
+        <div class="parchment-header">
+          <h3 class="parchment-title">📿 Tràng Hạt Niệm Phật (108 Hạt)</h3>
+          <button type="button" class="modal-close-btn" data-close="beadsModal">✕</button>
+        </div>
+        <p class="parchment-sub">
+          Nhân vật đang ngồi kiết già trên bồ đoàn. Chạm vào vòng hạt (hoặc bấm phím <b>Space</b>) để lần từng hạt và niệm hồng danh Phật (+1 Công đức / hạt).
+        </p>
+
+        <div class="beads-canvas-wrap">
+          <canvas id="beadsCanvas" width="280" height="280"></canvas>
+          <div class="beads-center-info">
+            <b id="beadCountDisplay">0 / 108</b>
+            <small id="beadMantraDisplay">Nam Mô A Di Đà Phật</small>
+          </div>
+        </div>
+
+        <button type="button" class="parchment-primary-btn" id="btnTapBead">
+          🙏 Lần 1 Hạt · Niệm “Nam Mô A Di Đà Phật” (Space)
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL 3: Tụng Kinh & Gõ Mõ -->
+    <div id="chantModal" class="modal-backdrop" hidden>
+      <div class="parchment-card">
+        <div class="parchment-header">
+          <h3 class="parchment-title">📖 Tụng Kinh &amp; Gõ Mõ</h3>
+          <button type="button" class="modal-close-btn" data-close="chantModal">✕</button>
+        </div>
+
+        <div>
+          <div class="field-label" style="margin-bottom: 5px;">CHỌN BÀI KINH / KỆ TỤNG</div>
+          <select id="sutraSelect" class="parchment-input" style="width: 100%;"></select>
+        </div>
+
+        <div class="sutra-box" id="sutraLinesContainer"></div>
+
+        <button type="button" class="wooden-fish-tap-btn" id="btnStrikeWoodenFish">
+          <span>🪵</span>
+          <span>Gõ Mõ Tụng Kinh (Cốc! · +1 Công đức)</span>
+        </button>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <button type="button" class="parchment-secondary-btn" id="btnToggleAutoWoodenFish">
+            ▶️ Tự động gõ mõ (80 nhịp/phút)
+          </button>
+          <span style="font-size: 12.5px; font-weight: 700; color: #7a5c32;">
+            Đã gõ: <b id="woodenFishCount">0</b> tiếng mõ
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 4: Dâng Lễ & Thắp Hương Cầu Nguyện -->
+    <div id="incenseModal" class="modal-backdrop" hidden>
+      <div class="parchment-card">
+        <div class="parchment-header">
+          <h3 class="parchment-title">🪔 Thắp Hương &amp; Dâng Lễ Tam Bảo</h3>
+          <button type="button" class="modal-close-btn" data-close="incenseModal">✕</button>
+        </div>
+        <p class="parchment-sub">
+          Nhân vật đang đứng trước Lư Hương Đồng dâng 3 nén tâm hương. Chọn lễ vật và ghi lời nguyện cầu bình an:
+        </p>
+
+        <div class="card-grid-3" id="offeringGrid"></div>
+
+        <div>
+          <div class="field-label" style="margin-bottom: 5px;">LỜI KHẤN NGUYỆN BÌNH AN</div>
+          <textarea id="incenseWishInput" class="parchment-input" style="width: 100%; height: 70px; padding: 10px; resize: none;" placeholder="Con xin thành tâm kính lễ mười phương Chư Phật, cầu nguyện gia đình bình an, mạnh khỏe..."></textarea>
+        </div>
+
+        <button type="button" class="parchment-primary-btn" id="btnSubmitIncense">
+          🔥 Dâng Hương &amp; Cắm Vào Lư Đồng (+5 Công đức)
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL 5: Thả Đèn Hoa Đăng Hồ Sen -->
+    <div id="lanternModal" class="modal-backdrop" hidden>
+      <div class="parchment-card">
+        <div class="parchment-header">
+          <h3 class="parchment-title">🪷 Thả Đèn Hoa Đăng Cầu Nguyện</h3>
+          <button type="button" class="modal-close-btn" data-close="lanternModal">✕</button>
+        </div>
+        <p class="parchment-sub">
+          Ngọn đèn hoa đăng của bạn sẽ được nhân vật thả xuống Hồ Sen Cá Koi và lưu lại lời nguyện trên bảng Đèn Nguyện của chùa.
+        </p>
+
+        <div>
+          <div class="field-label" style="margin-bottom: 5px;">ĐIỀU ƯỚC / LỜI CẦU NGUYỆN CỦA BẠN</div>
+          <textarea id="lanternWishInput" class="parchment-input" style="width: 100%; height: 80px; padding: 10px; resize: none;" placeholder="Ví dụ: Cầu mong cha mẹ luôn mạnh khỏe, tâm bình an, vạn sự cát tường..."></textarea>
+        </div>
+
+        <button type="button" class="parchment-primary-btn" id="btnSubmitLantern">
+          🏮 Thả Đèn Xuống Hồ Sen (+3 Công đức)
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL 6: Xin Xăm Đầu Năm -->
+    <div id="fortuneModal" class="modal-backdrop" hidden>
+      <div class="parchment-card">
+        <div class="parchment-header">
+          <h3 class="parchment-title">🎋 Xin Xăm Cầu Quẻ Lành</h3>
+          <button type="button" class="modal-close-btn" data-close="fortuneModal">✕</button>
+        </div>
+        <p class="parchment-sub">
+          Thành tâm khấn nguyện và bấm lắc ống xăm tre để nhận quẻ xăm chỉ lối bình an hôm nay.
+        </p>
+
+        <div class="fortune-stage" id="fortuneStage">
+          <div class="bamboo-cylinder" id="bambooCylinder">🎋 XĂM</div>
+          <button type="button" class="parchment-primary-btn" id="btnShakeFortune">
+            🙏 Thành Tâm Lắc Ống Xăm
+          </button>
+        </div>
+
+        <div id="fortuneResultBox" hidden style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="font-size: 18px; color: #7a4e12;" id="fortuneTitleText">Quẻ Số 01 · Hồng Nhật Đương Không</strong>
+            <span class="merit-badge" id="fortuneRankBadge">Thượng Thượng</span>
+          </div>
+          <div class="poem-card" id="fortunePoemText"></div>
+          <div style="font-size: 13px; line-height: 1.5; display: grid; gap: 5px;">
+            <div><b>Tổng quát:</b> <span id="fortuneOverallText"></span></div>
+            <div><b>Công danh:</b> <span id="fortuneWorkText"></span></div>
+            <div><b>Gia đạo &amp; Tình cảm:</b> <span id="fortuneLoveText"></span></div>
+            <div><b>Sức khỏe:</b> <span id="fortuneHealthText"></span></div>
+          </div>
+          <button type="button" class="parchment-secondary-btn" id="btnRedrawFortune">Xin quẻ khác</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 7: Linh Thú Đồng Hành -->
+    <div id="companionModal" class="modal-backdrop" hidden>
+      <div class="parchment-card">
+        <div class="parchment-header">
+          <h3 class="parchment-title">🐾 Linh Thú Đồng Hành</h3>
+          <button type="button" class="modal-close-btn" data-close="companionModal">✕</button>
+        </div>
+        <p class="parchment-sub">
+          Chọn linh thú đi theo bước chân bạn khắp sân chùa và Chánh Điện:
+        </p>
+        <div class="card-grid-3" id="companionGrid"></div>
+      </div>
+    </div>
+
+    <!-- MODAL 8: Cấp Tu & Bảng Công Đức -->
+    <div id="levelModal" class="modal-backdrop" hidden>
+      <div class="parchment-card">
+        <div class="parchment-header">
+          <h3 class="parchment-title">🏆 Cấp Tu &amp; Bảng Công Đức</h3>
+          <button type="button" class="modal-close-btn" data-close="levelModal">✕</button>
+        </div>
+        <div style="text-align: center; padding: 10px; background: #ede3ce; border-radius: 14px;">
+          <div style="font-size: 12px; color: #7c6a50;">CẤP TU HIỆN TẠI</div>
+          <div style="font-size: 26px; font-weight: 900; color: #7a5216;" id="modalCurrentLevelName">Cấp 1 · Sơ Tâm</div>
+          <div style="font-size: 14px; font-weight: 700; color: #9c6d24;">Tổng công đức: <span id="modalCurrentMerit">0</span> 🪷</div>
+        </div>
+        <div class="field-label">LỘ TRÌNH 6 CẤP TU TẬP</div>
+        <div id="levelProgressionList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+      </div>
+    </div>
+
+    <!-- MODAL 9: Hướng dẫn cách chơi -->
+    <div id="guideModal" class="modal-backdrop" hidden>
+      <div class="parchment-card">
+        <div class="parchment-header">
+          <h3 class="parchment-title">❓ Hướng Dẫn Đi Chùa Online 3D</h3>
+          <button type="button" class="modal-close-btn" data-close="guideModal">✕</button>
+        </div>
+        <div style="font-size: 13.5px; line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
+          <p><b>1. Bắt đầu trước Cổng Tam Quan:</b> Nhân vật xuất hiện trước cổng chùa 3 lối. Đi bộ qua cổng (phím <b>WASD / Mũi tên</b>, <b>Click xuống đất</b> hoặc bấm nút vàng <b>[E]</b>) để vào trong chùa.</p>
+          <p><b>2. Mở Menu Hành Lễ &amp; Animation:</b> Khi bước vào sân chùa và Chánh Điện, các menu hành lễ sẽ hiện lên:</p>
+          <ul style="padding-left: 18px; display: flex; flex-direction: column; gap: 4px;">
+            <li><b>🙇 Lạy Phật (Phím B):</b> Nhân vật chắp tay, quỳ xuống bồ đoàn và cúi dập đầu lạy Phật 3 lạy trang nghiêm.</li>
+            <li><b>🪔 Dâng Lễ / Thắp Hương (Phím H):</b> Nhân vật cầm 3 nén hương vái 3 vái và cắm hương vào Lư Hương Đồng tỏa khói.</li>
+            <li><b>📿 Tràng Hạt (Phím T):</b> Ngồi kiết già lần vòng 108 hạt niệm Phật.</li>
+            <li><b>📖 Tụng Kinh (Phím K):</b> Ngồi gõ mõ gỗ cốc-cốc theo từng câu kinh Bát Nhã, Chú Đại Bi, A Di Đà.</li>
+            <li><b>🔔 Thỉnh Chuông / 🎋 Xin Xăm / 🪷 Thả Đèn / 🧹 Quét Lá:</b> Lại gần điểm tương tác trong sân chùa và bấm <b>E</b> hoặc chọn từ menu dưới.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Three.js 3D Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="data.js"></script>
+  <script src="audio.js"></script>
+  <script src="world3d.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
