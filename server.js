@@ -13,6 +13,8 @@ const MIME_TYPES = {
   ".json": "application/json; charset=utf-8",
   ".png": "image/png",
   ".jpg": "image/jpeg",
+  ".webp": "image/webp",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
   ".svg": "image/svg+xml",
   ".ico": "image/x-icon"
 };

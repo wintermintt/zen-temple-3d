@@ -17,3 +17,4 @@ Trang web đi chùa online 3D nhập vai, tái hiện không gian Chùa Vô Lư�
   - **Thỉnh Đại Hồng Chuông (Chuông đung đưa ngân vang)**, **Xin Xăm (Lắc ống tre nhận quẻ thơ)**, **Thả Đèn Hoa Đăng (Hồ Sen)**, **Quét Lá Bồ Đề**.
 - **Âm thanh Web Audio API chân thực**: Tổng hợp trực tiếp tiếng Chuông đồng, Mõ gỗ, Chuông khánh, Lần hạt, Lắc ống xăm và Nhạc thiền đàn tranh.
 - **Tiến trình tu tập**: 6 cấp tu (Sơ Tâm → Tinh Tấn → Định Tâm → Từ Bi → Trí Huệ → An Lạc) mở khóa 5 linh thú đồng hành (Mèo chùa, Chim sẻ, Thỏ ngọc, Rùa vàng, Hạc tiên).
+
